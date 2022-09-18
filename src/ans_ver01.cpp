@@ -99,6 +99,51 @@ struct Rectangle {
   }
 };
 
+struct Admin {
+  ll N;
+  //→ ↑ ⤴ ⤵
+  vvvi used(4);
+  Admin(ll N) {
+    rep(i, 0, 4) {
+      used[i].resize(N);
+      rep(j, 0, N) used[i][j].assign(N, 0);
+    }
+  }
+  Admin(vvi &u1, vvi &u2, vvi &u3, vvi &u4) {
+    used[0] = u1;
+    used[1] = u2;
+    used[2] = u3;
+    used[3] = u4;
+  }
+  bool is_set_line(Line L) {
+    ll cux = L.p1.x;
+    ll cuy = L.p1.y;
+    //→↑
+    if (L.line_type() < 4) {
+      while (!(Point(cux, cuy) == L.p2)) {
+        ll nex = cux + L.unit.x;
+        ll ney = cuy + L.unit.y;
+        if (used[L.line_type() % 2][min(cuy, ney)][min(cux, nex)])
+          return 0;
+        // used[L.line_type() % 2][min(cuy, ney)][min(cux, nex)] = 1;
+        cux = nex;
+        cuy = ney;
+      }
+    } else {
+      while (!(Point(cux, cuy) == L.p2)) {
+        ll nex = cux + L.unit.x;
+        ll ney = cuy + L.unit.y;
+        ll juy = L.line_type() % 2 == 0 ? min(cuy, ney) : max(cuy, ney);
+        if (used[L.line_type() % 2 + 2][juy][min(cux, nex)])
+          return 0;
+        // used[L.line_type() % 2 + 2][juy][min(cux, nex)] = 1;
+        cux = nex;
+        cuy = ney;
+      }
+    }
+  }
+};
+
 bool is_rectangle(Point &p1, Point &p2, Point &p3, Point &p4) {
   vector<Line> L(4);
   L[0] = Line(p1, p2);
@@ -123,7 +168,8 @@ void solver(ll N, ll M, vector<Point> &ini, vector<Point> &find, vvi &ban) {
   rep(x, 0, N) {
     rep(y, 0, N) {
       Point p1 = Point(x, y);
-      if(ban[y][x] == 1)continue;
+      if (ban[y][x] == 1)
+        continue;
       rep(p2, 0, M) {
         Line l1 = Line(p1, ini[p2]);
         if (l1.line_type() == -1)
