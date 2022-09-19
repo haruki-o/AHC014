@@ -243,7 +243,7 @@ struct Solver {
   }
 
   void search_all_point(vector<Rectangle> &_ret) {
-    ll max_w = -1;
+    ll min_len = N * N;
     Rectangle best_r;
     rep(x, 0, N) {
       rep(y, 0, N) {
@@ -264,10 +264,10 @@ struct Solver {
               if (!check_set_line(l3) || !check_set_line(l4))
                 continue;
               if (is_rectangle(p1, p2, p3, p4)) {
-                ll _w = calc_w(p1);
-                if (max_w < _w) {
-                  best_r = Rectangle(p1, p2, p3, p4);
-                  max_w = _w;
+                Rectangle r(p1, p2, p3, p4);
+                if (r.length < min_len) {
+                  best_r = r;
+                  min_len = r.length;
                 }
               }
             }
@@ -275,7 +275,7 @@ struct Solver {
         }
       }
     }
-    if (max_w != -1)
+    if (min_len != N * N)
       _ret.push_back(best_r);
   }
 
@@ -288,7 +288,7 @@ struct Solver {
   void solve() {
     srand((unsigned int)time(NULL));
     auto all_startClock = system_clock::now();
-    while(1) {
+    while (1) {
       const double time =
           duration_cast<microseconds>(system_clock::now() - all_startClock)
               .count() *
