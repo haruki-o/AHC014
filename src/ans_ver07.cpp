@@ -14,11 +14,13 @@ typedef vector<ll> vll;
 typedef vector<vll> vvll;
 #define rep(i, l, n) for (ll i = (ll)(l); i < (ll)(n); i++)
 #define repd(i, n, l) for (ll i = (ll)(n); i > (ll)(l); i--)
-#define TIME_LIMIT (4.7)
+// #define TIME_LIMIT (30)
 #define def (201010)
 // #define MOD (1000000007)
 #define MOD (998244353)
 #define PI (3.14159265359)
+
+double TIME_LIMIT = 4.7;
 
 struct Point {
   ll x, y;
@@ -29,6 +31,7 @@ struct Point {
       return true;
     return false;
   }
+  ll dist(ll N) { return abs(x - N / (ll)2) + abs(y - N / (ll)2); }
   void out() { cout << x << " " << y << " "; }
   void debug_out() { cout << "(" << x << ", " << y << ") "; }
 };
@@ -267,6 +270,134 @@ struct Admin {
   }
 };
 
+struct Admin_ans_ver03 {
+  ll N;
+  //→ ↑ ⤴ ⤵
+  vvvi used_e;
+  vvi used_p;
+  static constexpr int DX[8] = {1, 0, -1, 0, 1, -1, -1, 1};
+  static constexpr int DY[8] = {0, 1, 0, -1, 1, 1, -1, -1};
+
+  Admin_ans_ver03(ll N, vector<Point> &all) : N(N) {
+    used_e.resize(4);
+    used_p.resize(N);
+    rep(i, 0, 4) {
+      used_e[i].resize(N);
+      rep(j, 0, N) used_e[i][j].assign(N, 0);
+    }
+    rep(i, 0, N) used_p[i].assign(N, 0);
+    for (Point p : all)
+      used_p[p.y][p.x] = 1;
+  }
+
+  bool find_used_point(Line &L) {
+    ll sx = L.p1.x + L.unit.x;
+    ll sy = L.p1.y + L.unit.y;
+    while (sx != L.p2.x || sy != L.p2.y) {
+      if (used_p[sy][sx] == 1)
+        return true;
+      sx += L.unit.x;
+      sy += L.unit.y;
+    }
+    return false;
+  }
+
+  bool find_used_edge(Line &L) {
+    ll cux = L.p1.x;
+    ll cuy = L.p1.y;
+    //→↑
+    if (L.line_type() < 4) {
+      while (!(Point(cux, cuy) == L.p2)) {
+        ll nex = cux + L.unit.x;
+        ll ney = cuy + L.unit.y;
+        if (used_e[L.line_type() % 2][min(cuy, ney)][min(cux, nex)])
+          return true;
+        // used_e[L.line_type() % 2][min(cuy, ney)][min(cux, nex)] = 1;
+        cux = nex;
+        cuy = ney;
+      }
+    } else {
+      while (!(Point(cux, cuy) == L.p2)) {
+        ll nex = cux + L.unit.x;
+        ll ney = cuy + L.unit.y;
+        ll juy = L.line_type() % 2 == 0 ? min(cuy, ney) : max(cuy, ney);
+        if (used_e[L.line_type() % 2 + 2][juy][min(cux, nex)])
+          return true;
+        // used_e[L.line_type() % 2 + 2][juy][min(cux, nex)] = 1;
+        cux = nex;
+        cuy = ney;
+      }
+    }
+    return false;
+  }
+
+  bool can_set_line(Line &L) {
+    if (find_used_edge(L))
+      return false;
+    if (find_used_point(L))
+      return false;
+    return true;
+  }
+
+  void set_line(Line &L) {
+    ll cux = L.p1.x;
+    ll cuy = L.p1.y;
+    used_p[cuy][cux] = 1;
+    //→↑
+    if (L.line_type() < 4) {
+      while (!(Point(cux, cuy) == L.p2)) {
+        ll nex = cux + L.unit.x;
+        ll ney = cuy + L.unit.y;
+        used_e[L.line_type() % 2][min(cuy, ney)][min(cux, nex)] = 1;
+        cux = nex;
+        cuy = ney;
+      }
+    } else {
+      while (!(Point(cux, cuy) == L.p2)) {
+        ll nex = cux + L.unit.x;
+        ll ney = cuy + L.unit.y;
+        ll juy = L.line_type() % 2 == 0 ? min(cuy, ney) : max(cuy, ney);
+        used_e[L.line_type() % 2 + 2][juy][min(cux, nex)] = 1;
+        cux = nex;
+        cuy = ney;
+      }
+    }
+  }
+
+  void set_rectangle(Rectangle &R) {
+    Line l1(R.p1, R.p2);
+    Line l2(R.p2, R.p3);
+    Line l3(R.p3, R.p4);
+    Line l4(R.p4, R.p1);
+    set_line(l1);
+    set_line(l2);
+    set_line(l3);
+    set_line(l4);
+    used_p[R.p1.y][R.p1.x] = 1;
+  }
+
+  Point find_point(Point &p, ll dir) {
+    ll cux = p.x + DX[dir];
+    ll cuy = p.y + DY[dir];
+    Point _ret;
+    while (1) {
+      if (cux == -1 || cux == N || cuy == -1 || cuy == N) {
+        return Point(-1, -1);
+      }
+      if (used_p[cuy][cux] == 1) {
+        _ret = Point(cux, cuy);
+        break;
+      }
+      cux += DX[dir];
+      cuy += DY[dir];
+    }
+    Line L(p, _ret);
+    if (find_used_edge(L))
+      return Point(-1, -1);
+    return _ret;
+  }
+};
+
 bool is_rectangle(Point &p1, Point &p2, Point &p3, Point &p4) {
   vector<Line> L(4);
   L[0] = Line(p1, p2);
@@ -359,33 +490,135 @@ struct Solver {
       if (candi_r.empty()) {
         break;
       }
+      vector<pair<ll, ll>> _sort;
+      rep(i, 0, (ll)candi_r.size()) {
+        _sort.push_back({candi_r[i].p1.dist(N), i});
+
+      }
+      sort(_sort.begin(), _sort.end());
       ll max_num = -1;
       Rectangle best_r;
       ll ma;
-      if (((double)M / N < 1.7 && N <= 40) ||
-          ((double)M / N < 1.2 && N <= 50) || N <= 37)
+      rep(i,0,(ll)candi_r.size()){
+        if(!candi_r[i].p1.is_internal(N)){
+          if(max_num < calc_w(candi_r[i].p1)){
+            max_num = calc_w(candi_r[i].p1);
+            best_r = candi_r[i];
+          }
+        }
+      }
+      
+      if (((double)M / N < 1.7 && N <= 40) || ((double)M / N < 1.2 && N <= 50))
         ma = (ll)10000;
       else
-        ma = 5 + (ll)((double)(3 - M / N));
+        ma = (ll)5 + max((ll)0, (2 - M / N));
+      ll mi = 0;
       rep(i, 0, min((ll)candi_r.size(), ma)) {
-        admin.set_rectangle(candi_r[i]);
+        admin.set_rectangle(candi_r[_sort[i].second]);
         vector<Rectangle> _candi_r;
         search_all_point(_candi_r, turn);
         ll at_num = (ll)_candi_r.size();
-        if (max_num <= at_num || max_num == -1) {
-          best_r = candi_r[i];
+        if (max_num == at_num && mi < calc_w(candi_r[_sort[i].second].p1)) {
+          mi = calc_w(candi_r[_sort[i].second].p1);
+          best_r = candi_r[_sort[i].second];
+        }
+        if (max_num < at_num || max_num == -1) {
+          best_r = candi_r[_sort[i].second];
           max_num = at_num;
         }
-        admin.delete_rectangle(candi_r[i]);
+        admin.delete_rectangle(candi_r[_sort[i].second]);
       }
       admin.set_rectangle(best_r);
       ret.push_back(best_r);
     }
-    cerr << duration_cast<microseconds>(system_clock::now() - all_startClock)
-                    .count() *
-                1e-6
-         << endl;
+    // cerr << duration_cast<microseconds>(system_clock::now() - all_startClock)
+    //                 .count() *
+    //             1e-6
+    //      << endl;
   }
+};
+
+struct Solver_ans_ver03 {
+  ll N, M;
+  vector<Point> all_point;
+  Admin_ans_ver03 admin;
+  vector<Rectangle> ret;
+
+  Solver_ans_ver03(ll N, ll M, Admin_ans_ver03 &admin)
+      : N(N), M(M), admin(admin) {}
+
+  int calc_w(Point p) {
+    ll _x = p.x - (N - 1) / 2;
+    _x *= _x;
+    ll _y = p.y - (N - 1) / 2;
+    _y *= _y;
+    return _x + _y + 1;
+  }
+
+  void search_all_point(vector<Rectangle> &_ret, ll turn) {
+    ll max_w = -1;
+    Rectangle best_r;
+    rep(x, 0, N) {
+      rep(y, 0, N) {
+        Point p1(x, y);
+        if (admin.used_p[y][x] == 1)
+          continue;
+        rep(dir, 0, 8) {
+          Point p2 = admin.find_point(p1, dir);
+          if (p2 == Point(-1, -1))
+            continue;
+          Point p3 = admin.find_point(p2, dir / 4 * 4 + (dir + 1) % 4);
+          if (p3 == Point(-1, -1))
+            continue;
+          Point p4 = admin.find_point(p3, dir / 4 * 4 + (dir + 2) % 4);
+          if (p4 == Point(-1, -1))
+            continue;
+          if (is_rectangle(p1, p2, p3, p4)) {
+            Line l4(p4, p1);
+            if (admin.can_set_line(l4)) {
+              if (max_w < calc_w(p1)) {
+                best_r = Rectangle(p1, p2, p3, p4);
+                max_w = calc_w(p1);
+              }
+            }
+          }
+        }
+      }
+    }
+    if (max_w != -1) {
+      _ret.push_back(best_r);
+    }
+  }
+
+  void set_Reactangle(Rectangle &R) {
+    admin.used_p[R.p1.y][R.p1.x] = 1;
+    admin.set_rectangle(R);
+  }
+
+  void solve() {
+    srand((unsigned int)time(NULL));
+    auto all_startClock = system_clock::now();
+    int turn = 0;
+    while (1) {
+      const double time =
+          duration_cast<microseconds>(system_clock::now() - all_startClock)
+              .count() *
+          1e-6;
+      if (time > TIME_LIMIT)
+        break;
+      vector<Rectangle> candi_r;
+      search_all_point(candi_r, turn++);
+      if (candi_r.empty()) {
+        break;
+      }
+      set_Reactangle(candi_r[0]);
+      ret.push_back(candi_r[0]);
+    }
+    // cerr << duration_cast<microseconds>(system_clock::now() - all_startClock)
+    //                 .count() *
+    //             1e-6
+    //      << endl;
+  };
 };
 
 void print_ans(vector<Rectangle> &res) {
@@ -414,6 +647,8 @@ ll calc_score(ll N, ll M, vvi &used_p) {
 }
 
 int main() {
+  srand((unsigned int)time(NULL));
+  auto startClock = system_clock::now();
   ll N, M;
   cin >> N >> M;
   vll x(M), y(M);
@@ -423,9 +658,31 @@ int main() {
 
   vector<Rectangle> all_rectangle;
   vector<Point> all_point = initial_point;
+
+  Admin_ans_ver03 admin03(N, all_point);
+  Solver_ans_ver03 s03(N, M, admin03);
+  s03.solve();
+
+  const double time =
+      duration_cast<microseconds>(system_clock::now() - startClock).count() *
+      1e-6;
+  TIME_LIMIT -= time;
+
   Admin admin(N, all_point);
   Solver s(N, M, admin);
   s.solve();
-  print_ans(s.ret);
-  cerr << N << " " << M << " " << calc_score(N, M, s.admin.used_p) << endl;
+
+  ll score = calc_score(N, M, s.admin.used_p);
+  ll score03 = calc_score(N, M, s03.admin.used_p);
+  if (score < score03)
+    print_ans(s03.ret);
+  else
+    print_ans(s.ret);
+
+  cerr << N << " " << M << " " << score03 << " " << score << endl;
+  cerr
+      << duration_cast<microseconds>(system_clock::now() - startClock).count() *
+             1e-6
+      << endl;
+  cerr << max(score03, score) << endl;
 }

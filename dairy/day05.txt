@@ -1,0 +1,73 @@
+・ やること
+  - ans_ver04.cpp(New,2h)
+    - iターン目で[N/4,3*N/4]の中の場合は、i + 1ターン目で置ける頂点の(個数・w)で決める
+    - とりあえず個数
+    - ①iターン目で出た候補すべてに対して、またsearch_all_point()を呼び出しているので実行時間がだめ 
+    - ../in/0024.txt(43, 73, 780,911 → 807,775)
+    - ../in/0084.txt(59, 59, 495,813 → 583,010)
+      - 実行時間を無視するとすごい改善した
+    - iターン目で出た候補の中からN個(5個とか?)選び、N個置い て、search_all_point()を呼び出して、比較する。その後実装上ではi + Nターンに飛ぶ
+      - search_all_point()を呼び出す回数を減らしたい
+      - 精度も落ちたし、実装が難しそう
+  - ans_ver05.cpp(New)
+    - ans_ver03とans_ver04のいい方をとる
+  - ans_ver06.cpp 
+    - ans_ver05で候補数が同じときwが大きい方を採用
+  - ans_ver07.cpp
+    - 内側から埋めてみる(やめた)
+
+・ 統計
+  - day05_00xlsx
+    - ans_ver04.cpp
+      - ①の個数をすべて -> min(size(), 5)
+      - ../in/で回してみると(day05_00.xlsx)
+      - Nが小さい or Mが小さいとき回数を増加する
+      - ①の個数をすべて -> min(size(), 3)
+        - 回数1/2にすると大体1/2になる
+      - ①の個数をすべて
+        - if(N < 45)10000
+        - else (61 - N)  + 5  * (double)(4 - N / M)
+      -  (i)①の個数をすべて
+        - if (M / N == 1 || N <= 39)(ll)10000;
+        - else ma = 5 + (ll)((double)(4 - M / N));
+      -  (ii)①の個数をすべて
+        - if (M / N == 1 || N <= 37)(ll)10000;
+        - else ma = 5 + (ll)((double)(4 - M / N));
+      -  (iii)①の個数をすべて
+        - if (((double)M / N < 1.7 && N <= 40) ||
+            ((double)M / N < 1.2 && N <= 50) || N <= 37)(ll)10000;
+        - else ma = 5 + (ll)((double)(3 - M / N));
+      - (iiii)①の個数をすべて
+        - if (((double)M / N < 1.7 && N <= 40) ||
+            ((double)M / N < 1.2 && N <= 50))
+          ma = (ll)10000;
+        - else ma = 5 + max(0,(2 - M / N));
+  - day05_01.xlsx
+    - ans_ver03とans_ver04とans_ver05の比較
+  
+
+・ 提出
+  - ans_ver04.cpp 
+    - https://atcoder.jp/contests/ahc014/submissions/35026687
+    - 33.92M
+    - 3895ms
+  - ans_ver05.cpp
+    - https://atcoder.jp/contests/ahc014/submissions/35028911
+    - 34.55M
+    - 4233ms
+  - ans_ver06.cpp
+    - https://atcoder.jp/contests/ahc014/submissions/35029771
+    - 35.05M
+    - 4428ms
+
+
+・ 実行時間
+  - 手元  
+    - 17.432s, 0.198s
+  - コードテスト 
+    - 3.3638s, 0.050s
+  - 約6倍......
+
+・ 感想
+  - なんもわからん
+  - 大幅に変える必要があるが、よくわからん
