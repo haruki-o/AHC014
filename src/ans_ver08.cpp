@@ -359,64 +359,185 @@ struct Solver {
     // cerr << turn << " " << sum << endl;
   }
 
+  void dfs_search_all_point(vector<Rectangle> &_ret, Admin _admin) {
+    ll max_w = -1;
+    ll min_l = N * N;
+    ll sum = 0;
+    Rectangle best_r;
+    rep(x, 0, N) {
+      rep(y, 0, N) {
+        Point p1(x, y);
+        if (_admin.used_p[y][x] == 1)
+          continue;
+        rep(dir, 0, 8) {
+          Point p2 = _admin.find_point(p1, dir);
+          if (p2 == Point(-1, -1))
+            continue;
+          Point p3 = _admin.find_point(p2, dir / 4 * 4 + (dir + 1) % 4);
+          if (p3 == Point(-1, -1))
+            continue;
+          Point p4 = _admin.find_point(p3, dir / 4 * 4 + (dir + 2) % 4);
+          if (p4 == Point(-1, -1))
+            continue;
+          if (is_rectangle(p1, p2, p3, p4)) {
+            Line l4(p4, p1);
+            if (_admin.can_set_line(l4)) {
+              Rectangle _r(p1, p2, p3, p4);
+              sum++;
+              _ret.push_back(_r);
+              //     if (max_w < calc_w(p1)) {
+              //       best_r = _r;
+              //       max_w = calc_w(p1);
+              //     }
+            }
+          }
+        }
+      }
+    }
+    // if (max_w != -1 || min_l != N * N) {
+    //   _ret.push_back(best_r);
+    // }
+    // cerr << turn << " " << sum << endl;
+  }
+
+  pair<ll, vector<Rectangle>> dfs(Admin _admin, ll score, ll dep) {
+    cerr << "dep : " << dep << endl;
+    vector<Rectangle> candi_r;
+    dfs_search_all_point(candi_r, _admin);
+    ll ave = 0;
+    rep(i, 0, 5) {
+      std::random_device seed_gen;
+      std::mt19937 engine(seed_gen());
+      std::shuffle(candi_r.begin(), candi_r.end(), engine);
+      vector<int> is_set((int)candi_r.size(), 0);
+      ll is_set_num = 0;
+      rep(j, 0, (ll)candi_r.size()) {
+        if (_admin.can_set_rectangle(candi_r[j]) &&
+            !_admin.used_p[candi_r[j].p1.y][candi_r[j].p1.x]) {
+          is_set[j] = 1;
+          is_set_num++;
+          _admin.set_rectangle(candi_r[j]);
+        }
+      }
+      vector<Rectangle> next_candi_r;
+      search_all_point(next_candi_r, 0);
+      ave += (ll)next_candi_r.size() + is_set_num;
+      rep(j, 0, (ll)candi_r.size()) {
+        if (is_set[j]) {
+          _admin.delete_rectangle(candi_r[j]);
+        }
+      }
+    }
+    ave /= 5;
+    cerr << "ave : " << ave << endl;
+    if (ave == 0)
+      return {0, candi_r};
+
+    ll dfs_num = 0;
+    ll max_score = 0;
+    pair<ll, vector<Rectangle>> ret;
+    rep(i, 0, 1000) {
+      if (dfs_num == 3)
+        break;
+      std::random_device seed_gen;
+      std::mt19937 engine(seed_gen());
+      std::shuffle(candi_r.begin(), candi_r.end(), engine);
+      vector<int> is_set((int)candi_r.size(), 0);
+      ll is_set_num = 0;
+      rep(j, 0, (ll)candi_r.size()) {
+        if (_admin.can_set_rectangle(candi_r[j]) &&
+            !_admin.used_p[candi_r[j].p1.y][candi_r[j].p1.x]) {
+          is_set[j] = 1;
+          is_set_num++;
+          _admin.set_rectangle(candi_r[j]);
+        }
+      }
+      vector<Rectangle> next_candi_r;
+      search_all_point(next_candi_r, 0);
+      if (ave < (ll)next_candi_r.size() + is_set_num) {
+        cerr << "next:" << (ll)next_candi_r.size() + is_set_num << endl;
+        auto _ret = dfs(_admin, (ll)next_candi_r.size() + is_set_num, dep + 1);
+        if (_ret.first + (ll)next_candi_r.size() + is_set_num < max_score) {
+          ret.second.clear();
+          for (auto cu : candi_r)
+            ret.second.push_back(cu);
+          for (auto cu : next_candi_r)
+            ret.second.push_back(cu);
+          ret.first = _ret.first + (ll)next_candi_r.size() + is_set_num;
+          for (auto cu : _ret.second)
+            ret.second.push_back(cu);
+        }
+        dfs_num++;
+      } else
+        continue;
+
+      rep(j, 0, (ll)candi_r.size()) {
+        if (is_set[j]) {
+          _admin.delete_rectangle(candi_r[j]);
+        }
+      }
+    }
+    return ret;
+  }
+
   void solve() {
     srand((unsigned int)time(NULL));
     auto all_startClock = system_clock::now();
     int turn = 0;
-    while (1) {
-      const double time =
-          duration_cast<microseconds>(system_clock::now() - all_startClock)
-              .count() *
-          1e-6;
-      if (time > TIME_LIMIT)
-        break;
-      vector<Rectangle> candi_r;
-      search_all_point(candi_r, turn++);
-      if (candi_r.empty())
-        break;
+    // while (1) {
+    //   const double time =
+    //       duration_cast<microseconds>(system_clock::now() - all_startClock)
+    //           .count() *
+    //       1e-6;
+    //   if (time > TIME_LIMIT)
+    //     break;
+    //   vector<Rectangle> candi_r;
+    //   search_all_point(candi_r, turn++);
+    //   if (candi_r.empty())
+    //     break;
 
-      ll max_w = -1;
-      vector<Rectangle> best_r;
-      cerr << (ll)candi_r.size() << endl;
-      rep(j, 0, 100) {
-        std::random_device seed_gen;
-        std::mt19937 engine(seed_gen());
-        std::shuffle(candi_r.begin(), candi_r.end(), engine);
-        vector<int> is_set((int)candi_r.size(), 0);
-        ll all_w = 0;
-        rep(i, 0, (ll)candi_r.size()) {
-          if (admin.can_set_rectangle(candi_r[i]) &&
-              !admin.used_p[candi_r[i].p1.y][candi_r[i].p1.x]) {
-            is_set[i] = 1;
-            all_w += calc_w(candi_r[i].p1);
-            admin.set_rectangle(candi_r[i]);
-          }
-        }
-        if (max_w < all_w) {
-          max_w = all_w;
-          best_r.clear();
-          rep(i, 0, (ll)candi_r.size()) {
-            if (is_set[i])
-              best_r.push_back(candi_r[i]);
-          }
-        }
-        ll sum = 0;
-        rep(i, 0, (ll)candi_r.size()) {
-          if (is_set[i]) {
-            sum++;
-            admin.delete_rectangle(candi_r[i]);
-          }
-        }
-        cerr << sum << " ";
-      }
-      cerr << endl;
-      for (Rectangle cu : best_r) {
-        ret.push_back(cu);
-        if (admin.can_set_rectangle(cu) && !admin.used_p[cu.p1.y][cu.p1.x]) {
-          admin.set_rectangle(cu);
-        }
-      }
-    }
+    //   ll max_num = -1;
+    //   vector<Rectangle> best_r;
+    //   rep(j, 0, 100) {
+    //     std::random_device seed_gen;
+    //     std::mt19937 engine(seed_gen());
+    //     std::shuffle(candi_r.begin(), candi_r.end(), engine);
+    //     vector<int> is_set((int)candi_r.size(), 0);
+    //     ll is_set_num = 0;
+    //     rep(i, 0, min((ll)candi_r.size(), (ll)1000)) {
+    //       if (admin.can_set_rectangle(candi_r[i]) &&
+    //           !admin.used_p[candi_r[i].p1.y][candi_r[i].p1.x]) {
+    //         is_set[i] = 1;
+    //         is_set_num++;
+    //         admin.set_rectangle(candi_r[i]);
+    //       }
+    //     }
+    //     vector<Rectangle> next_candi_r;
+    //     search_all_point(next_candi_r, 0);
+    //     if (max_num < (ll)next_candi_r.size() + is_set_num) {
+    //       max_num = (ll)next_candi_r.size() + is_set_num;
+    //       best_r.clear();
+    //       rep(i, 0, (ll)candi_r.size()) {
+    //         if (is_set[i])
+    //           best_r.push_back(candi_r[i]);
+    //       }
+    //     }
+    //     ll sum = 0;
+    //     rep(i, 0, (ll)candi_r.size()) {
+    //       if (is_set[i]) {
+    //         sum++;
+    //         admin.delete_rectangle(candi_r[i]);
+    //       }
+    //     }
+    //   }
+    //   for (Rectangle cu : best_r) {
+    //     ret.push_back(cu);
+    //     if (admin.can_set_rectangle(cu) && !admin.used_p[cu.p1.y][cu.p1.x]) {
+    //       admin.set_rectangle(cu);
+    //     }
+    //   }
+    // }
+    ret = dfs(admin, 0, 0).second;
     cerr << duration_cast<microseconds>(system_clock::now() - all_startClock)
                     .count() *
                 1e-6
