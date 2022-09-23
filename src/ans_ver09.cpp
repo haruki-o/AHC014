@@ -14,7 +14,7 @@ typedef vector<ll> vll;
 typedef vector<vll> vvll;
 #define rep(i, l, n) for (ll i = (ll)(l); i < (ll)(n); i++)
 #define repd(i, n, l) for (ll i = (ll)(n); i > (ll)(l); i--)
-#define TIME_LIMIT (4.7)
+#define TIME_LIMIT (300)
 #define def (201010)
 // #define MOD (1000000007)
 #define MOD (998244353)
@@ -306,6 +306,43 @@ bool is_rectangle(Point &p1, Point &p2, Point &p3, Point &p4) {
   return 1;
 }
 
+ll calc_score(ll N, ll M, vvi &used_p, vector<Rectangle> &R) {
+  ll sum = 0;
+  ll all = 0;
+  ll c = (N - 1) / 2;
+  for (Rectangle cu : R) {
+    ll x = cu.p1.x;
+    ll y = cu.p1.y;
+    sum += (x - c) * (x - c) + (y - c) * (y - c) + 1;
+  }
+
+  rep(x, 0, N) {
+    rep(y, 0, N) {
+      if (used_p[y][x] == 1)
+        sum += (x - c) * (x - c) + (y - c) * (y - c) + 1;
+      all += (x - c) * (x - c) + (y - c) * (y - c) + 1;
+    }
+  }
+  ll A = (ll)1000000 * N * N * sum;
+  ll B = M * all;
+  return A / B;
+}
+
+ll at_calc_score(ll N, ll M, vvi &used_p) {
+  ll sum = 0;
+  ll all = 0;
+  ll c = (N - 1) / 2;
+  rep(x, 0, N) {
+    rep(y, 0, N) {
+      if (used_p[y][x] == 1)
+        sum += (x - c) * (x - c) + (y - c) * (y - c) + 1;
+      all += (x - c) * (x - c) + (y - c) * (y - c) + 1;
+    }
+  }
+  ll A = (ll)1000000 * N * N * sum;
+  ll B = M * all;
+  return A / B;
+}
 struct Solver {
   ll N, M;
   vector<Point> all_point;
@@ -363,17 +400,34 @@ struct Solver {
     // cerr << turn << " " << sum << endl;
   }
 
-  void dfs_search_all_point(vector<Rectangle> &_ret, Admin _admin) {
-    ll max_w = -1;
-    ll min_l = N * N;
-    ll sum = 0;
-    Rectangle best_r;
-    rep(x, 0, N) {
-      rep(y, 0, N) {
-        Point p1(x, y);
-        if (_admin.used_p[y][x] == 1)
-          continue;
+  void solve() {
+    srand((unsigned int)time(NULL));
+    auto all_startClock = system_clock::now();
+
+    vector<Point> all_point;
+    rep(i, 0, 10) {
+      rep(x, 0, N) { rep(y, 0, N) all_point.push_back(Point(x, y)); }
+    }
+    ll loop_num = 0;
+    ll best_score = 0;
+    while (1) {
+      std::random_device seed_gen;
+      std::mt19937 engine(seed_gen());
+      std::shuffle(all_point.begin(), all_point.end(), engine);
+      const double time =
+          duration_cast<microseconds>(system_clock::now() - all_startClock)
+              .count() *
+          1e-6;
+      if (time > TIME_LIMIT)
+        break;
+      loop_num++;
+      Admin _admin = admin;
+      vector<Rectangle> _ret;
+      ll score = 0;
+      for (Point p1 : all_point) {
         rep(dir, 0, 8) {
+          if (_admin.used_p[p1.y][p1.x] == 1)
+            continue;
           Point p2 = _admin.find_point(p1, dir);
           if (p2 == Point(-1, -1))
             continue;
@@ -387,116 +441,23 @@ struct Solver {
             Line l4(p4, p1);
             if (_admin.can_set_line(l4)) {
               Rectangle _r(p1, p2, p3, p4);
-              sum++;
               _ret.push_back(_r);
-              //     if (max_w < calc_w(p1)) {
-              //       best_r = _r;
-              //       max_w = calc_w(p1);
-              //     }
+              _admin.set_rectangle(_r);
             }
           }
         }
       }
+      score = at_calc_score(N, M, _admin.used_p);
+      if (best_score < score) {
+        ret = _ret;
+        best_score = score;
+      }
+      // cerr << score << " " << best_score << endl;
     }
-    // if (max_w != -1 || min_l != N * N) {
-    //   _ret.push_back(best_r);
-    // }
-    // cerr << turn << " " << sum << endl;
-  }
-
-  pair<ll, vector<Rectangle>> dfs(Admin _admin, ll score, ll dep) {
-    cerr << "dep : " << dep << endl;
-    vector<Rectangle> candi_r;
-    if (dep == 5)
-      return {0, candi_r};
-    dfs_search_all_point(candi_r, _admin);
-    ll ave = 0;
-    rep(i, 0, 10) {
-      std::random_device seed_gen;
-      std::mt19937 engine(seed_gen());
-      std::shuffle(candi_r.begin(), candi_r.end(), engine);
-      vector<int> is_set((int)candi_r.size(), 0);
-      ll is_set_num = 0;
-      rep(j, 0, (ll)candi_r.size()) {
-        if (_admin.can_set_rectangle(candi_r[j]) &&
-            !_admin.used_p[candi_r[j].p1.y][candi_r[j].p1.x]) {
-          is_set[j] = 1;
-          is_set_num++;
-          _admin.set_rectangle(candi_r[j]);
-        }
-      }
-      vector<Rectangle> next_candi_r;
-      dfs_search_all_point(next_candi_r, _admin);
-      ave += (ll)next_candi_r.size() + is_set_num;
-      rep(j, 0, (ll)candi_r.size()) {
-        if (is_set[j]) {
-          _admin.delete_rectangle(candi_r[j]);
-        }
-      }
-    }
-    ave /= 11;
-    cerr << "ave : " << ave << endl;
-    if (ave == 0)
-      return {0, candi_r};
-
-    ll dfs_num = 0;
-    ll max_score = 0;
-    pair<ll, vector<Rectangle>> ret;
-    rep(i, 0, 100) {
-      if (dfs_num == 3)
-        break;
-      std::random_device seed_gen;
-      std::mt19937 engine(seed_gen());
-      std::shuffle(candi_r.begin(), candi_r.end(), engine);
-      vector<int> is_set((int)candi_r.size(), 0);
-      ll is_set_num = 0;
-      rep(j, 0, (ll)candi_r.size()) {
-        if (_admin.can_set_rectangle(candi_r[j]) &&
-            !_admin.used_p[candi_r[j].p1.y][candi_r[j].p1.x]) {
-          is_set[j] = 1;
-          is_set_num++;
-          _admin.set_rectangle(candi_r[j]);
-        }
-      }
-      vector<Rectangle> next_candi_r;
-      dfs_search_all_point(next_candi_r, _admin);
-      if (ave < (ll)next_candi_r.size() + is_set_num) {
-        cerr << "next:" << (ll)next_candi_r.size() + is_set_num << endl;
-        auto _ret = dfs(_admin, is_set_num, dep + 1);
-        if (max_score < _ret.first + is_set_num) {
-          ret.second.clear();
-          rep(j, 0, (ll)candi_r.size()) {
-            if (is_set[j])
-              ret.second.push_back(candi_r[j]);
-          }
-          ret.first = _ret.first + is_set_num;
-          max_score = _ret.first + is_set_num;
-          for (auto cu : _ret.second)
-            ret.second.push_back(cu);
-        }
-        dfs_num++;
-      } else
-        continue;
-
-      rep(j, 0, (ll)candi_r.size()) {
-        if (is_set[j]) {
-          _admin.delete_rectangle(candi_r[j]);
-        }
-      }
-    }
-    return ret;
-  }
-
-  void solve() {
-    srand((unsigned int)time(NULL));
-    auto all_startClock = system_clock::now();
-    int turn = 0;
-
-    ret = dfs(admin, 0, 0).second;
     cerr << duration_cast<microseconds>(system_clock::now() - all_startClock)
                     .count() *
                 1e-6
-         << endl;
+         << " " << loop_num << endl;
   }
 };
 
@@ -507,28 +468,6 @@ void print_ans(vector<Rectangle> &res) {
     res[i].out();
     cout << endl;
   }
-}
-
-ll calc_score(ll N, ll M, vvi &used_p, vector<Rectangle> &R) {
-  ll sum = 0;
-  ll all = 0;
-  ll c = (N - 1) / 2;
-  for (Rectangle cu : R) {
-    ll x = cu.p1.x;
-    ll y = cu.p1.y;
-    sum += (x - c) * (x - c) + (y - c) * (y - c) + 1;
-  }
-
-  rep(x, 0, N) {
-    rep(y, 0, N) {
-      if (used_p[y][x] == 1)
-        sum += (x - c) * (x - c) + (y - c) * (y - c) + 1;
-      all += (x - c) * (x - c) + (y - c) * (y - c) + 1;
-    }
-  }
-  ll A = (ll)1000000 * N * N * sum;
-  ll B = M * all;
-  return A / B;
 }
 
 int main() {
