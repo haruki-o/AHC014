@@ -1,0 +1,27 @@
+- やったこと
+  - ans_ver10.cpp
+    - vector<P> all_point
+      - 多点スタート -> 近傍が20回swapの山登り
+    - なんか改善されてそう
+  - ans_ver11.cpp
+    - 焼きなまします
+    - よくわからんけど出す
+
+- 統計
+  - day08_00.xlsx
+   - ans_ver05,09,10の比較
+   - ans10よさそう！
+
+- 提出
+  - ans_ver10.cpp
+    - https://atcoder.jp/contests/ahc014/submissions/35080747
+    - 37.23M
+  - ans_ver11.cpp
+    - https://atcoder.jp/contests/ahc014/submissions/35081703
+    - 40.22M
+  - ans_ver11.cpp(近傍を最小1 -> 5に変更)
+    - https://atcoder.jp/contests/ahc014/submissions/35082178
+    - 41.79M
+  - ans_ver11.cpp(pointの範囲を[0,N-1] -> [N/6,5N/6], end_temp = 1000 -> 100)
+    - https://atcoder.jp/contests/ahc014/submissions/35086799
+    - 41.82M

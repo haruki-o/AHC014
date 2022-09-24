@@ -14,7 +14,7 @@ typedef vector<ll> vll;
 typedef vector<vll> vvll;
 #define rep(i, l, n) for (ll i = (ll)(l); i < (ll)(n); i++)
 #define repd(i, n, l) for (ll i = (ll)(n); i > (ll)(l); i--)
-#define TIME_LIMIT (30.0)
+#define TIME_LIMIT (4.7)
 #define def (201010)
 // #define MOD (1000000007)
 #define MOD (998244353)
@@ -400,6 +400,26 @@ struct Solver {
     // cerr << turn << " " << sum << endl;
   }
 
+  void modify(vector<Point> &_p, ll loop_num) {
+    if (loop_num < 100) {
+      std::random_device seed_gen;
+      std::mt19937 engine(seed_gen());
+      std::shuffle(_p.begin(), _p.end(), engine);
+    } else {
+      ll num = max((ll)5, 30 - loop_num / (ll)40);
+      // cerr << num << " ";
+      rep(k, 0, num) {
+        ll i = rand() % (ll)_p.size();
+        ll j = rand() % (ll)_p.size();
+        swap(_p[i], _p[j]);
+      }
+    }
+    // rep(num,0,3){
+    //   ll i = rand() % (ll)_p.size();
+    //   _p.erase(_p.begin() + i);
+    // }
+  }
+
   void solve() {
     srand((unsigned int)time(NULL));
     auto all_startClock = system_clock::now();
@@ -408,12 +428,12 @@ struct Solver {
     rep(i, 0, 10) {
       rep(x, 0, N) { rep(y, 0, N) all_point.push_back(Point(x, y)); }
     }
+    std::random_device seed_gen;
+    std::mt19937 engine(seed_gen());
+    std::shuffle(all_point.begin(), all_point.end(), engine);
     ll loop_num = 0;
     ll best_score = 0;
     while (1) {
-      std::random_device seed_gen;
-      std::mt19937 engine(seed_gen());
-      std::shuffle(all_point.begin(), all_point.end(), engine);
       const double time =
           duration_cast<microseconds>(system_clock::now() - all_startClock)
               .count() *
@@ -423,8 +443,10 @@ struct Solver {
       loop_num++;
       Admin _admin = admin;
       vector<Rectangle> _ret;
+      vector<Point> new_all_point = all_point;
+      modify(new_all_point, loop_num);
       ll score = 0;
-      for (Point p1 : all_point) {
+      for (Point p1 : new_all_point) {
         rep(dir, 0, 8) {
           if (_admin.used_p[p1.y][p1.x] == 1)
             continue;
@@ -441,6 +463,7 @@ struct Solver {
             Line l4(p4, p1);
             if (_admin.can_set_line(l4)) {
               Rectangle _r(p1, p2, p3, p4);
+              // if(_r.length >= 10)continue;
               _ret.push_back(_r);
               _admin.set_rectangle(_r);
             }
@@ -451,6 +474,7 @@ struct Solver {
       if (best_score < score) {
         ret = _ret;
         best_score = score;
+        all_point = new_all_point;
       }
       // cerr << score << " " << best_score << endl;
     }
