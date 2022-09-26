@@ -14,7 +14,7 @@ typedef vector<ll> vll;
 typedef vector<vll> vvll;
 #define rep(i, l, n) for (ll i = (ll)(l); i < (ll)(n); i++)
 #define repd(i, n, l) for (ll i = (ll)(n); i > (ll)(l); i--)
-#define TIME_LIMIT (30)
+#define TIME_LIMIT (4.9)
 #define def (201010)
 // #define MOD (1000000007)
 #define MOD (998244353)
@@ -408,12 +408,38 @@ struct Solver {
       std::mt19937 engine(seed_gen());
       std::shuffle(_p.begin(), _p.end(), engine);
     } else {
-      ll num = max((ll)5, 30 - loop_num / (ll)100);
-      rep(k, 0, num) {
-        ll i = rand() % (ll)_p.size();
-        ll j = rand() % (ll)_p.size();
-        swap(_p[i], _p[j]);
+      if (loop_num % 2 == 0) {
+        ll num = max((ll)5, 30 - loop_num / (ll)100);
+        rep(k, 0, num) {
+          ll i = rand() % (ll)_p.size();
+          ll j = rand() % (ll)_p.size();
+          swap(_p[i], _p[j]);
+        }
       }
+      if (loop_num % 2 == 1) {
+        ll num = max((ll)2, 30 - loop_num / (ll)10);
+        rep(k, 0, num) {
+          ll i = rand() % (ll)_p.size();
+          ll j = rand() % (ll)_p.size();
+          swap(_p[i], _p[j]);
+        }
+      }
+      // if (loop_num % 3 == 1) {
+      //   ll num = 1;
+      //   rep(k,0,num){
+      //     ll i = rand() % (ll)_p.size();
+      //     _p.erase(_p.begin() + i);
+      //   }
+      // }
+      // if (loop_num % 3 == 2 && 10000 > loop_num ) {
+      //   ll num = 1;
+      //   rep(k,0,num){
+      //     ll _x = rand() % (ll)N;
+      //     ll _y = rand() % (ll)N;
+      //     ll _i = rand() % (ll)_p.size();
+      //     _p.insert(_p.begin() + _i, Point(_x,_y));
+      //   }
+      // }
     }
     // rep(num,0,3){
     //   ll i = rand() % (ll)_p.size();
@@ -428,8 +454,17 @@ struct Solver {
     vector<Point> all_point;
     rep(i, 0, 3) {
       rep(x, N / 6, N - N / 6) {
-        rep(y, N / 6, N - N / 6) all_point.push_back(Point(x, y));
+        rep(y, N / 6, N - N / 6) {
+          if (admin.used_p[y][x] == 0)
+            all_point.push_back(Point(x, y));
+        }
       }
+      // rep(x, 0, N - N / 6) {
+      //   rep(y, , N - N / 6) {
+      //     if (admin.used_p[y][x] == 0)
+      //       all_point.push_back(Point(x, y));
+      //   }
+      // }
     }
     std::random_device seed_gen;
     std::mt19937 engine(seed_gen());
@@ -452,9 +487,11 @@ struct Solver {
       modify(new_all_point, loop_num);
       ll score = 0;
       for (Point p1 : new_all_point) {
+        if (_admin.used_p[p1.y][p1.x] == 1)
+          continue;
+        ll min_length = N * N;
+        Rectangle best_r;
         rep(dir, 0, 8) {
-          if (_admin.used_p[p1.y][p1.x] == 1)
-            continue;
           Point p2 = _admin.find_point(p1, dir);
           if (p2 == Point(-1, -1))
             continue;
@@ -468,11 +505,16 @@ struct Solver {
             Line l4(p4, p1);
             if (_admin.can_set_line(l4)) {
               Rectangle _r(p1, p2, p3, p4);
-              // if(_r.length >= 10)continue;
-              _ret.push_back(_r);
-              _admin.set_rectangle(_r);
+              if (_r.length < min_length || min_length == N * N) {
+                best_r = _r;
+                min_length = _r.length;
+              }
             }
           }
+        }
+        if (min_length != N * N) {
+          _ret.push_back(best_r);
+          _admin.set_rectangle(best_r);
         }
       }
       int new_score = at_calc_score(N, M, _admin.used_p);
@@ -493,7 +535,7 @@ struct Solver {
       //   best_score = score;
       //   all_point = new_all_point;
       // }
-      // cerr << new_score << " " << best_score << endl;
+      // cerr << new_score << " " << best_score << " " << (ll)all_point.size()<< endl;
     }
     cerr << duration_cast<microseconds>(system_clock::now() - all_startClock)
                     .count() *

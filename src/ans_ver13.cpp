@@ -14,7 +14,7 @@ typedef vector<ll> vll;
 typedef vector<vll> vvll;
 #define rep(i, l, n) for (ll i = (ll)(l); i < (ll)(n); i++)
 #define repd(i, n, l) for (ll i = (ll)(n); i > (ll)(l); i--)
-#define TIME_LIMIT (30)
+#define TIME_LIMIT (4.9)
 #define def (201010)
 // #define MOD (1000000007)
 #define MOD (998244353)
@@ -426,6 +426,20 @@ struct Solver {
     auto all_startClock = system_clock::now();
 
     vector<Point> all_point;
+    vector<Rectangle> first_rectangle;
+    search_all_point(first_rectangle, 0);
+    vector<Rectangle> add_first_r;
+    ll add_num = 0;
+    while (1) {
+      ll i = rand() % (ll)first_rectangle.size();
+      if (admin.can_set_rectangle(first_rectangle[i])) {
+        admin.set_rectangle(first_rectangle[i]);
+        add_first_r.push_back(first_rectangle[i]);
+        add_num++;
+      }
+      if (add_num == 3)
+        break;
+    }
     rep(i, 0, 3) {
       rep(x, N / 6, N - N / 6) {
         rep(y, N / 6, N - N / 6) all_point.push_back(Point(x, y));
@@ -488,13 +502,9 @@ struct Solver {
         best_score = new_score;
         all_point = new_all_point;
       }
-      // if (best_score < score) {
-      //   ret = _ret;
-      //   best_score = score;
-      //   all_point = new_all_point;
-      // }
       // cerr << new_score << " " << best_score << endl;
     }
+    ret.insert(ret.begin(), add_first_r.begin(), add_first_r.end());
     cerr << duration_cast<microseconds>(system_clock::now() - all_startClock)
                     .count() *
                 1e-6

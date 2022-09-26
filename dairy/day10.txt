@@ -1,0 +1,12 @@
+- やったこと
+  - ans_ver14
+    - ans_ver11の派生でrep(dir,0,8)で周囲の長さの短さで決める
+    - 近傍を2と5にする
+
+- 提出
+  - ans_ver14
+    - https://atcoder.jp/contests/ahc014/submissions/35170420
+    - 41.00M
+  
+- 感想
+  - わからなさすぎるので、今日で終了です

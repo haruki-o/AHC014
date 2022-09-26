@@ -14,7 +14,7 @@ typedef vector<ll> vll;
 typedef vector<vll> vvll;
 #define rep(i, l, n) for (ll i = (ll)(l); i < (ll)(n); i++)
 #define repd(i, n, l) for (ll i = (ll)(n); i > (ll)(l); i--)
-#define TIME_LIMIT (30)
+#define TIME_LIMIT (4.9)
 #define def (201010)
 // #define MOD (1000000007)
 #define MOD (998244353)
@@ -427,8 +427,12 @@ struct Solver {
 
     vector<Point> all_point;
     rep(i, 0, 3) {
-      rep(x, N / 6, N - N / 6) {
-        rep(y, N / 6, N - N / 6) all_point.push_back(Point(x, y));
+      ll l = N / 7, r = N - N / 7;
+      rep(x, l, r) {
+        rep(y, l, r) {
+          if (admin.used_p[y][x] == 0)
+            all_point.push_back(Point(x, y));
+        }
       }
     }
     std::random_device seed_gen;
@@ -452,9 +456,11 @@ struct Solver {
       modify(new_all_point, loop_num);
       ll score = 0;
       for (Point p1 : new_all_point) {
+        if (_admin.used_p[p1.y][p1.x] == 1)
+          continue;
+        Rectangle best_r;
+        ll best_length = -1;
         rep(dir, 0, 8) {
-          if (_admin.used_p[p1.y][p1.x] == 1)
-            continue;
           Point p2 = _admin.find_point(p1, dir);
           if (p2 == Point(-1, -1))
             continue;
@@ -468,11 +474,23 @@ struct Solver {
             Line l4(p4, p1);
             if (_admin.can_set_line(l4)) {
               Rectangle _r(p1, p2, p3, p4);
-              // if(_r.length >= 10)continue;
-              _ret.push_back(_r);
-              _admin.set_rectangle(_r);
+              double at_length = (double)_r.length / best_length;
+              if (best_length == -1 || at_length > rand() % INF /
+              (double)INF) {
+                best_length = at_length;
+                best_r = _r;
+              }
+              // double at_length = (double)_r.length;
+              // if (best_length == -1 || at_length < best_length) {
+              //   best_length = at_length;
+              //   best_r = _r;
+              // }
             }
           }
+        }
+        if (best_length != -1) {
+          _ret.push_back(best_r);
+          _admin.set_rectangle(best_r);
         }
       }
       int new_score = at_calc_score(N, M, _admin.used_p);
@@ -482,7 +500,7 @@ struct Solver {
       double temp = start_temp + (end_temp - start_temp) * time / TIME_LIMIT;
       // 遷移確率関数(最大化の場合)
       double prob = exp((new_score - pre_score) / temp);
-      // cerr << temp << " " << new_score - pre_score << " " << prob << endl;
+      // cerr << setprecision(5) << temp << " " << new_score - pre_score << " " << prob << endl;
       if (prob > 0.9) { // 確率probで遷移する
         ret = _ret;
         best_score = new_score;

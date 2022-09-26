@@ -24,4 +24,4 @@
     - 41.79M
   - ans_ver11.cpp(pointの範囲を[0,N-1] -> [N/6,5N/6], end_temp = 1000 -> 100)
     - https://atcoder.jp/contests/ahc014/submissions/35086799
-    - 41.82M
+    - 41.87M
